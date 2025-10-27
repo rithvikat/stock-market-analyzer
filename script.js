@@ -1,6 +1,12 @@
 document.getElementById("analyzeBtn").addEventListener("click", function () {
   const input = document.getElementById("prices").value.trim();
   const resultDiv = document.getElementById("result");
+  const chartCanvas = document.getElementById("stockChart");
+
+  // Clear previous chart
+  if (window.stockChartInstance) {
+    window.stockChartInstance.destroy();
+  }
 
   if (input === "") {
     resultDiv.innerHTML = "⚠️ Please enter stock prices separated by commas.";
@@ -10,7 +16,7 @@ document.getElementById("analyzeBtn").addEventListener("click", function () {
   // Convert input to array of numbers
   const prices = input.split(",").map(x => Number(x.trim()));
 
-  // Check for invalid or negative numbers
+  // Validate input
   if (prices.some(isNaN)) {
     resultDiv.innerHTML = "⚠️ Please enter valid numbers only.";
     return;
@@ -50,6 +56,37 @@ document.getElementById("analyzeBtn").addEventListener("click", function () {
       ⏳ <b>Holding Period:</b> ${period} day${period > 1 ? 's' : ''}<br>
       📊 <b>Stock Prices in that period:</b> [${stocksInPeriod.join(", ")}]
     `;
+
+    // Draw Chart
+    const ctx = chartCanvas.getContext("2d");
+    window.stockChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: prices.map((_, i) => "Day " + (i + 1)),
+        datasets: [{
+          label: "Stock Prices",
+          data: prices,
+          borderColor: "blue",
+          backgroundColor: "rgba(0,0,255,0.1)",
+          fill: true,
+          pointRadius: 4,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: "Day" } },
+          y: { title: { display: true, text: "Price (₹)" } }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: "Stock Price Movement"
+          }
+        }
+      }
+    });
+
   } else {
     resultDiv.innerHTML = "📉 No profit can be made (prices are continuously decreasing).";
   }
