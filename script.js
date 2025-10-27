@@ -1,87 +1,56 @@
-let chart; // global chart variable
+document.getElementById("analyzeBtn").addEventListener("click", function () {
+  const input = document.getElementById("prices").value.trim();
+  const resultDiv = document.getElementById("result");
 
-function analyzeStocks() {
-    const pricesInput = document.getElementById('prices').value;
-    const prices = pricesInput.split(',').map(Number);
+  if (input === "") {
+    resultDiv.innerHTML = "⚠️ Please enter stock prices separated by commas.";
+    return;
+  }
 
-    if (prices.length === 0) {
-        alert("Please enter stock prices!");
-        return;
+  // Convert input to array of numbers
+  const prices = input.split(",").map(x => Number(x.trim()));
+
+  // Check for invalid or negative numbers
+  if (prices.some(isNaN)) {
+    resultDiv.innerHTML = "⚠️ Please enter valid numbers only.";
+    return;
+  }
+
+  if (prices.some(p => p < 0)) {
+    resultDiv.innerHTML = "⚠️ Stock prices cannot be negative.";
+    return;
+  }
+
+  // Find maximum profit
+  let minPrice = prices[0];
+  let maxProfit = 0;
+  let buyDay = 0;
+  let sellDay = 0;
+
+  for (let i = 1; i < prices.length; i++) {
+    if (prices[i] - minPrice > maxProfit) {
+      maxProfit = prices[i] - minPrice;
+      sellDay = i;
+      buyDay = prices.indexOf(minPrice);
     }
-
-    const result = maxSubarray(prices, 0, prices.length - 1);
-    document.getElementById('result').innerHTML = 
-        `Maximum Profit: ₹${result.sum} <br>Buy on Day ${result.start + 1}, Sell on Day ${result.end + 1}`;
-
-    plotChart(prices, result.start, result.end);
-}
-
-// Divide and Conquer Maximum Subarray Sum
-function maxSubarray(arr, left, right) {
-    if (left === right) {
-        return {sum: 0, start: left, end: right};
+    if (prices[i] < minPrice) {
+      minPrice = prices[i];
     }
+  }
 
-    const mid = Math.floor((left + right) / 2);
-    const leftResult = maxSubarray(arr, left, mid);
-    const rightResult = maxSubarray(arr, mid + 1, right);
-    const crossResult = maxCrossingSubarray(arr, left, mid, right);
+  // Display result
+  if (maxProfit > 0) {
+    const period = sellDay - buyDay;
+    const stocksInPeriod = prices.slice(buyDay, sellDay + 1);
 
-    if (leftResult.sum >= rightResult.sum && leftResult.sum >= crossResult.sum) return leftResult;
-    if (rightResult.sum >= leftResult.sum && rightResult.sum >= crossResult.sum) return rightResult;
-    return crossResult;
-}
-
-function maxCrossingSubarray(arr, left, mid, right) {
-    let leftSum = -Infinity, sum = 0, maxLeft = mid;
-    for (let i = mid; i >= left; i--) {
-        sum += (i > 0 ? arr[i] - arr[i-1] : 0);
-        if (sum > leftSum) { leftSum = sum; maxLeft = i; }
-    }
-
-    let rightSum = -Infinity; sum = 0; let maxRight = mid + 1;
-    for (let i = mid + 1; i <= right; i++) {
-        sum += (arr[i] - arr[i-1]);
-        if (sum > rightSum) { rightSum = sum; maxRight = i; }
-    }
-
-    return {sum: leftSum + rightSum, start: maxLeft, end: maxRight};
-}
-
-// Plot stock prices and buy/sell points
-function plotChart(prices, buyIndex, sellIndex) {
-    const ctx = document.getElementById('stockChart').getContext('2d');
-
-    if (chart) chart.destroy(); // remove previous chart
-
-    const labels = prices.map((_, i) => `Day ${i+1}`);
-    const pointColors = prices.map((_, i) => {
-        if (i === buyIndex) return 'green';
-        if (i === sellIndex) return 'red';
-        return 'blue';
-    });
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Stock Price',
-                data: prices,
-                borderColor: 'blue',
-                backgroundColor: pointColors,
-                tension: 0.2,
-                pointRadius: 6
-            }]
-        },
-        options: {
-            plugins: {
-                legend: { display: false },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                y: { beginAtZero: false }
-            }
-        }
-    });
-}
+    resultDiv.innerHTML = `
+      ✅ <b>Maximum Profit:</b> ₹${maxProfit}<br>
+      📈 <b>Buy on Day:</b> ${buyDay + 1} (₹${prices[buyDay]})<br>
+      💰 <b>Sell on Day:</b> ${sellDay + 1} (₹${prices[sellDay]})<br>
+      ⏳ <b>Holding Period:</b> ${period} day${period > 1 ? 's' : ''}<br>
+      📊 <b>Stock Prices in that period:</b> [${stocksInPeriod.join(", ")}]
+    `;
+  } else {
+    resultDiv.innerHTML = "📉 No profit can be made (prices are continuously decreasing).";
+  }
+});
