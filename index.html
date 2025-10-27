@@ -13,7 +13,7 @@
         
         <label for="prices">Enter stock prices (comma-separated):</label>
         <input type="text" id="prices" placeholder="e.g., 100, 180, 260, 310, 40, 535, 695">
-        <button onclick="analyzeStocks()">Analyze</button>
+        <button id="analyzeButton">Analyze</button>
         
         <div id="result"></div>
         <canvas id="stockChart" width="400" height="200"></canvas>
@@ -21,6 +21,6 @@
 
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>
