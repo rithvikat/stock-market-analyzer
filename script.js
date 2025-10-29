@@ -1,93 +1,142 @@
-document.getElementById("analyzeBtn").addEventListener("click", function () {
-  const input = document.getElementById("prices").value.trim();
-  const resultDiv = document.getElementById("result");
-  const chartCanvas = document.getElementById("stockChart");
+// Divide & Conquer Maximum Subarray Algorithm for Stock Market Analyzer
 
-  // Clear previous chart
-  if (window.stockChartInstance) {
-    window.stockChartInstance.destroy();
+// ----- Helper Functions -----
+function maxCrossing(arr, left, mid, right) {
+  let leftSum = -Infinity, rightSum = -Infinity;
+  let sum = 0, maxLeft = mid, maxRight = mid + 1;
+
+  for (let i = mid; i >= left; i--) {
+    sum += arr[i];
+    if (sum > leftSum) {
+      leftSum = sum;
+      maxLeft = i;
+    }
   }
 
-  if (input === "") {
-    resultDiv.innerHTML = "⚠️ Please enter stock prices separated by commas.";
+  sum = 0;
+  for (let j = mid + 1; j <= right; j++) {
+    sum += arr[j];
+    if (sum > rightSum) {
+      rightSum = sum;
+      maxRight = j;
+    }
+  }
+
+  return { maxSum: leftSum + rightSum, leftIdx: maxLeft, rightIdx: maxRight };
+}
+
+function maxSubarrayDC(arr, left = 0, right = arr.length - 1) {
+  if (left === right) {
+    return { maxSum: arr[left], leftIdx: left, rightIdx: left };
+  }
+
+  const mid = Math.floor((left + right) / 2);
+  const leftRes = maxSubarrayDC(arr, left, mid);
+  const rightRes = maxSubarrayDC(arr, mid + 1, right);
+  const crossRes = maxCrossing(arr, left, mid, right);
+
+  let best = leftRes;
+  if (rightRes.maxSum > best.maxSum) best = rightRes;
+  if (crossRes.maxSum > best.maxSum) best = crossRes;
+
+  return best;
+}
+
+// ----- Chart.js Helper -----
+let globalChart = null;
+function renderChart(prices, buyIdx, sellIdx) {
+  const ctx = document.getElementById('stockChart').getContext('2d');
+
+  const highlight = prices.map((v, i) =>
+    i >= buyIdx && i <= sellIdx ? v : null
+  );
+
+  if (globalChart) globalChart.destroy();
+
+  globalChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: prices.map((_, i) => 'Day ' + (i + 1)),
+      datasets: [
+        {
+          label: 'Stock Prices',
+          data: prices,
+          borderColor: '#6a1b9a',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2
+        },
+        {
+          label: 'Best Period',
+          data: highlight,
+          borderColor: '#388e3c',
+          borderWidth: 3,
+          pointRadius: 4,
+          tension: 0.2
+        }
+      ]
+    }
+  });
+}
+
+// ----- Main Program -----
+document.getElementById('analyzeButton').addEventListener('click', function () {
+  const input = document.getElementById('prices').value.trim();
+  const resultDiv = document.getElementById('result');
+
+  if (globalChart) { globalChart.destroy(); globalChart = null; }
+
+  if (input === '') {
+    resultDiv.innerHTML = '⚠️ Please enter stock prices separated by commas.';
     return;
   }
 
-  // Convert input to array of numbers
-  const prices = input.split(",").map(x => Number(x.trim()));
+  const prices = input.split(',').map(s => Number(s.trim()));
 
-  // Validate input
   if (prices.some(isNaN)) {
-    resultDiv.innerHTML = "⚠️ Please enter valid numbers only.";
+    resultDiv.innerHTML = '⚠️ Please enter valid numeric prices.';
     return;
   }
 
   if (prices.some(p => p < 0)) {
-    resultDiv.innerHTML = "⚠️ Stock prices cannot be negative.";
+    resultDiv.innerHTML = '⚠️ Stock prices cannot be negative.';
     return;
   }
 
-  // Find maximum profit
-  let minPrice = prices[0];
-  let maxProfit = 0;
-  let buyDay = 0;
-  let sellDay = 0;
-
-  for (let i = 1; i < prices.length; i++) {
-    if (prices[i] - minPrice > maxProfit) {
-      maxProfit = prices[i] - minPrice;
-      sellDay = i;
-      buyDay = prices.indexOf(minPrice);
-    }
-    if (prices[i] < minPrice) {
-      minPrice = prices[i];
-    }
+  if (prices.length < 2) {
+    resultDiv.innerHTML = 'ℹ️ Need at least two days to analyze.';
+    renderChart(prices, null, null);
+    return;
   }
 
-  // Display result
-  if (maxProfit > 0) {
-    const period = sellDay - buyDay;
-    const stocksInPeriod = prices.slice(buyDay, sellDay + 1);
-
-    resultDiv.innerHTML = `
-      ✅ <b>Maximum Profit:</b> ₹${maxProfit}<br>
-      📈 <b>Buy on Day:</b> ${buyDay + 1} (₹${prices[buyDay]})<br>
-      💰 <b>Sell on Day:</b> ${sellDay + 1} (₹${prices[sellDay]})<br>
-      ⏳ <b>Holding Period:</b> ${period} day${period > 1 ? 's' : ''}<br>
-      📊 <b>Stock Prices in that period:</b> [${stocksInPeriod.join(", ")}]
-    `;
-
-    // Draw Chart
-    const ctx = chartCanvas.getContext("2d");
-    window.stockChartInstance = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: prices.map((_, i) => "Day " + (i + 1)),
-        datasets: [{
-          label: "Stock Prices",
-          data: prices,
-          borderColor: "blue",
-          backgroundColor: "rgba(0,0,255,0.1)",
-          fill: true,
-          pointRadius: 4,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        scales: {
-          x: { title: { display: true, text: "Day" } },
-          y: { title: { display: true, text: "Price (₹)" } }
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: "Stock Price Movement"
-          }
-        }
-      }
-    });
-
-  } else {
-    resultDiv.innerHTML = "📉 No profit can be made (prices are continuously decreasing).";
+  // Create array of daily changes
+  const diffs = [];
+  for (let i = 0; i < prices.length - 1; i++) {
+    diffs.push(prices[i + 1] - prices[i]);
   }
+
+  const res = maxSubarrayDC(diffs, 0, diffs.length - 1);
+
+  if (res.maxSum <= 0) {
+    resultDiv.innerHTML = '📉 No profitable interval found.';
+    renderChart(prices, null, null);
+    return;
+  }
+
+  const buyIdx = res.leftIdx;
+  const sellIdx = res.rightIdx + 1;
+
+  const profit = res.maxSum;
+  const holdingPeriod = sellIdx - buyIdx;
+  const stocksInPeriod = prices.slice(buyIdx, sellIdx + 1);
+
+  resultDiv.innerHTML = `
+    ✅ <b>Maximum Profit:</b> ₹${profit.toFixed(2)}<br>
+    📈 <b>Buy on Day:</b> ${buyIdx + 1} (₹${prices[buyIdx]})<br>
+    💰 <b>Sell on Day:</b> ${sellIdx + 1} (₹${prices[sellIdx]})<br>
+    ⏳ <b>Holding Period:</b> ${holdingPeriod} day${holdingPeriod > 1 ? 's' : ''}<br>
+    📊 <b>Stock Prices in that period:</b> [${stocksInPeriod.join(', ')}]
+  `;
+
+  renderChart(prices, buyIdx, sellIdx);
 });
