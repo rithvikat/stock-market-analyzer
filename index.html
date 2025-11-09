@@ -1,27 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Market Analyzer</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📈 Stock Market Analyzer</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Stock Market Analyzer</h1>
-        <p>Analyze the best time to buy and sell stocks using the <b>Maximum Subarray Sum</b> (Divide & Conquer Algorithm).</p>
-        
-        <label for="prices">Enter stock prices (comma-separated):</label>
-        <input type="text" id="prices" placeholder="e.g., 100, 180, 260, 310, 40, 535, 695">
+  <div class="container">
+    <h1>📈 Stock Market Analyzer</h1>
+    <p class="subtitle">Analyze profits using Divide & Conquer</p>
 
-        <button id="analyzeButton">Analyze</button>
-        
-        <div id="result"></div>
-        <canvas id="stockChart" width="400" height="200"></canvas>
+    <div class="mode-select">
+      <label><input type="radio" name="mode" value="daily" checked /> 📅 Daily Prices</label>
+      <label><input type="radio" name="mode" value="multiple" /> 💼 Multiple Shares</label>
     </div>
 
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./script.js"></script>
+    <!-- Daily Price Mode -->
+    <div id="daily-mode" class="mode-section">
+      <h2>📅 Daily Price Analysis</h2>
+      <label for="stock">Enter Stock Name:</label>
+      <input type="text" id="stock" placeholder="e.g., Reliance Industries" />
+
+      <label for="days">Enter Number of Days:</label>
+      <input type="number" id="days" min="2" placeholder="e.g., 6" />
+      <button id="generate">Generate Price Inputs</button>
+
+      <div id="price-inputs"></div>
+      <button id="analyze" class="analyze-btn" style="display:none;">Analyze</button>
+    </div>
+
+    <!-- Multiple Shares Mode -->
+    <div id="multi-mode" class="mode-section" style="display:none;">
+      <h2>💼 Multiple Shares Analysis</h2>
+      <label for="numShares">Enter Number of Shares:</label>
+      <input type="number" id="numShares" min="1" placeholder="e.g., 3" />
+      <button id="generateShares">Generate Share Inputs</button>
+      <div id="shares-container"></div>
+      <button id="analyzeShares" class="analyze-btn" style="display:none;">Analyze All</button>
+    </div>
+
+    <div id="output" class="output"></div>
+  </div>
+
+  <footer>© 2025 Stock Analyzer | Built with ❤️ using HTML, CSS & JS</footer>
+  <script src="script.js"></script>
 </body>
 </html>
