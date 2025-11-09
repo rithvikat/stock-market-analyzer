@@ -1,142 +1,177 @@
-// Divide & Conquer Maximum Subarray Algorithm for Stock Market Analyzer
-
-// ----- Helper Functions -----
-function maxCrossing(arr, left, mid, right) {
+// -------- Divide and Conquer for Max Subarray Sum --------
+function findCrossingProfit(arr, left, mid, right) {
   let leftSum = -Infinity, rightSum = -Infinity;
-  let sum = 0, maxLeft = mid, maxRight = mid + 1;
+  let sum = 0;
+  let buy = mid, sell = mid + 1;
 
   for (let i = mid; i >= left; i--) {
     sum += arr[i];
     if (sum > leftSum) {
       leftSum = sum;
-      maxLeft = i;
+      buy = i;
     }
   }
 
   sum = 0;
-  for (let j = mid + 1; j <= right; j++) {
-    sum += arr[j];
+  for (let i = mid + 1; i <= right; i++) {
+    sum += arr[i];
     if (sum > rightSum) {
       rightSum = sum;
-      maxRight = j;
+      sell = i;
     }
   }
 
-  return { maxSum: leftSum + rightSum, leftIdx: maxLeft, rightIdx: maxRight };
+  return { profit: leftSum + rightSum, buy, sell };
 }
 
-function maxSubarrayDC(arr, left = 0, right = arr.length - 1) {
-  if (left === right) {
-    return { maxSum: arr[left], leftIdx: left, rightIdx: left };
-  }
+function findMaxProfit(arr, left, right) {
+  if (left === right)
+    return { profit: arr[left], buy: left, sell: right };
 
-  const mid = Math.floor((left + right) / 2);
-  const leftRes = maxSubarrayDC(arr, left, mid);
-  const rightRes = maxSubarrayDC(arr, mid + 1, right);
-  const crossRes = maxCrossing(arr, left, mid, right);
+  let mid = Math.floor((left + right) / 2);
+  let leftRes = findMaxProfit(arr, left, mid);
+  let rightRes = findMaxProfit(arr, mid + 1, right);
+  let crossRes = findCrossingProfit(arr, left, mid, right);
 
-  let best = leftRes;
-  if (rightRes.maxSum > best.maxSum) best = rightRes;
-  if (crossRes.maxSum > best.maxSum) best = crossRes;
-
-  return best;
+  if (leftRes.profit >= rightRes.profit && leftRes.profit >= crossRes.profit)
+    return leftRes;
+  else if (rightRes.profit >= leftRes.profit && rightRes.profit >= crossRes.profit)
+    return rightRes;
+  else
+    return crossRes;
 }
 
-// ----- Chart.js Helper -----
-let globalChart = null;
-function renderChart(prices, buyIdx, sellIdx) {
-  const ctx = document.getElementById('stockChart').getContext('2d');
-
-  const highlight = prices.map((v, i) =>
-    i >= buyIdx && i <= sellIdx ? v : null
-  );
-
-  if (globalChart) globalChart.destroy();
-
-  globalChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: prices.map((_, i) => 'Day ' + (i + 1)),
-      datasets: [
-        {
-          label: 'Stock Prices',
-          data: prices,
-          borderColor: '#6a1b9a',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.2
-        },
-        {
-          label: 'Best Period',
-          data: highlight,
-          borderColor: '#388e3c',
-          borderWidth: 3,
-          pointRadius: 4,
-          tension: 0.2
-        }
-      ]
-    }
+// -------- Mode Switch Logic --------
+document.querySelectorAll('input[name="mode"]').forEach((radio) => {
+  radio.addEventListener("change", () => {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    document.getElementById("daily-mode").style.display = mode === "daily" ? "block" : "none";
+    document.getElementById("multi-mode").style.display = mode === "multiple" ? "block" : "none";
+    document.getElementById("output").innerHTML = "";
   });
+});
+
+// -------- Daily Mode --------
+document.getElementById("generate").addEventListener("click", () => {
+  const days = parseInt(document.getElementById("days").value);
+  const container = document.getElementById("price-inputs");
+  container.innerHTML = "";
+
+  if (days < 2) {
+    alert("Please enter at least 2 days!");
+    return;
+  }
+
+  for (let i = 1; i <= days; i++) {
+    const div = document.createElement("div");
+    div.innerHTML = `Day ${i} Price: ₹ <input type="number" id="price${i}">`;
+    container.appendChild(div);
+  }
+
+  document.getElementById("analyze").style.display = "inline-block";
+});
+
+document.getElementById("analyze").addEventListener("click", () => {
+  const stock = document.getElementById("stock").value.trim();
+  const days = parseInt(document.getElementById("days").value);
+  let prices = [];
+
+  if (!stock) {
+    alert("Enter stock name!");
+    return;
+  }
+
+  for (let i = 1; i <= days; i++) {
+    const val = parseFloat(document.getElementById(`price${i}`).value);
+    if (isNaN(val)) {
+      alert(`Enter valid price for Day ${i}`);
+      return;
+    }
+    prices.push(val);
+  }
+
+  const changes = [];
+  for (let i = 1; i < prices.length; i++) changes.push(prices[i] - prices[i - 1]);
+  const result = findMaxProfit(changes, 0, changes.length - 1);
+
+  const holdingPeriod = result.sell - result.buy + 1;
+  document.getElementById("output").innerHTML = `
+    <h3>📊 Analysis Result for ${stock}</h3>
+    <p><strong>Maximum Profit:</strong> ₹${result.profit.toFixed(2)}</p>
+    <p><strong>Holding Period:</strong> ${holdingPeriod} days</p>
+  `;
+});
+
+// -------- Multiple Shares Mode --------
+document.getElementById("generateShares").addEventListener("click", () => {
+  const num = parseInt(document.getElementById("numShares").value);
+  const container = document.getElementById("shares-container");
+  container.innerHTML = "";
+
+  if (num < 1) {
+    alert("Enter at least 1 share!");
+    return;
+  }
+
+  for (let s = 1; s <= num; s++) {
+    const div = document.createElement("div");
+    div.className = "share-block";
+    div.innerHTML = `
+      <h4>Share ${s}</h4>
+      <input type="text" id="shareName${s}" placeholder="Stock Name">
+      <input type="number" id="shareDays${s}" min="2" placeholder="No. of Days">
+      <button onclick="generateSharePrices(${s})">Add Prices</button>
+      <div id="sharePrices${s}"></div>
+    `;
+    container.appendChild(div);
+  }
+
+  document.getElementById("analyzeShares").style.display = "inline-block";
+});
+
+function generateSharePrices(id) {
+  const days = parseInt(document.getElementById(`shareDays${id}`).value);
+  const container = document.getElementById(`sharePrices${id}`);
+  container.innerHTML = "";
+
+  if (days < 2) {
+    alert("At least 2 days required!");
+    return;
+  }
+
+  for (let i = 1; i <= days; i++) {
+    container.innerHTML += `Day ${i} Price: ₹<input type="number" id="s${id}p${i}"><br>`;
+  }
 }
 
-// ----- Main Program -----
-document.getElementById('analyzeButton').addEventListener('click', function () {
-  const input = document.getElementById('prices').value.trim();
-  const resultDiv = document.getElementById('result');
+document.getElementById("analyzeShares").addEventListener("click", () => {
+  const num = parseInt(document.getElementById("numShares").value);
+  let results = [];
 
-  if (globalChart) { globalChart.destroy(); globalChart = null; }
+  for (let s = 1; s <= num; s++) {
+    const name = document.getElementById(`shareName${s}`).value.trim();
+    const days = parseInt(document.getElementById(`shareDays${s}`).value);
+    if (!name) continue;
 
-  if (input === '') {
-    resultDiv.innerHTML = '⚠️ Please enter stock prices separated by commas.';
-    return;
+    let prices = [];
+    for (let i = 1; i <= days; i++) {
+      const val = parseFloat(document.getElementById(`s${s}p${i}`).value);
+      if (isNaN(val)) return alert(`Invalid price for ${name}, Day ${i}`);
+      prices.push(val);
+    }
+
+    const changes = [];
+    for (let i = 1; i < prices.length; i++) changes.push(prices[i] - prices[i - 1]);
+    const res = findMaxProfit(changes, 0, changes.length - 1);
+    const holding = res.sell - res.buy + 1;
+    results.push({ name, profit: res.profit, hold: holding });
   }
 
-  const prices = input.split(',').map(s => Number(s.trim()));
-
-  if (prices.some(isNaN)) {
-    resultDiv.innerHTML = '⚠️ Please enter valid numeric prices.';
-    return;
-  }
-
-  if (prices.some(p => p < 0)) {
-    resultDiv.innerHTML = '⚠️ Stock prices cannot be negative.';
-    return;
-  }
-
-  if (prices.length < 2) {
-    resultDiv.innerHTML = 'ℹ️ Need at least two days to analyze.';
-    renderChart(prices, null, null);
-    return;
-  }
-
-  // Create array of daily changes
-  const diffs = [];
-  for (let i = 0; i < prices.length - 1; i++) {
-    diffs.push(prices[i + 1] - prices[i]);
-  }
-
-  const res = maxSubarrayDC(diffs, 0, diffs.length - 1);
-
-  if (res.maxSum <= 0) {
-    resultDiv.innerHTML = '📉 No profitable interval found.';
-    renderChart(prices, null, null);
-    return;
-  }
-
-  const buyIdx = res.leftIdx;
-  const sellIdx = res.rightIdx + 1;
-
-  const profit = res.maxSum;
-  const holdingPeriod = sellIdx - buyIdx;
-  const stocksInPeriod = prices.slice(buyIdx, sellIdx + 1);
-
-  resultDiv.innerHTML = `
-    ✅ <b>Maximum Profit:</b> ₹${profit.toFixed(2)}<br>
-    📈 <b>Buy on Day:</b> ${buyIdx + 1} (₹${prices[buyIdx]})<br>
-    💰 <b>Sell on Day:</b> ${sellIdx + 1} (₹${prices[sellIdx]})<br>
-    ⏳ <b>Holding Period:</b> ${holdingPeriod} day${holdingPeriod > 1 ? 's' : ''}<br>
-    📊 <b>Stock Prices in that period:</b> [${stocksInPeriod.join(', ')}]
-  `;
-
-  renderChart(prices, buyIdx, sellIdx);
+  let best = results.reduce((a, b) => (a.profit > b.profit ? a : b));
+  let html = "<h3>💼 Multi-Stock Analysis</h3>";
+  results.forEach(r => {
+    html += `<p><strong>${r.name}:</strong> Profit ₹${r.profit.toFixed(2)} | Holding ${r.hold} days</p>`;
+  });
+  html += `<p><strong>🏆 Best Performer:</strong> ${best.name} with ₹${best.profit.toFixed(2)}</p>`;
+  document.getElementById("output").innerHTML = html;
 });
