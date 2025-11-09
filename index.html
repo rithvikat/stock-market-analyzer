@@ -16,6 +16,7 @@
       <label><input type="radio" name="mode" value="multi"> 💼 Multiple Shares</label>
     </div>
 
+    <!-- Daily Prices Section -->
     <div id="daily-section" class="mode-section">
       <h2>📅 Daily Price Analysis</h2>
       <label>Enter Stock Name:</label>
@@ -29,11 +30,13 @@
       <button id="analyze" class="analyze-btn" style="display:none;">Analyze</button>
     </div>
 
+    <!-- Multiple Shares Section -->
     <div id="multi-section" class="mode-section" style="display:none;">
       <h2>💼 Multiple Shares Analysis</h2>
       <label>Enter Number of Stocks:</label>
       <input type="number" id="numStocks" placeholder="e.g., 3" min="1">
       <button id="generateStocks">Generate Stock Inputs</button>
+
       <div id="multi-inputs"></div>
       <button id="analyzeMulti" class="analyze-btn" style="display:none;">Analyze All</button>
     </div>
