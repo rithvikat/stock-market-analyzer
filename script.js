@@ -1,3 +1,4 @@
+// ---------- Divide & Conquer Functions ----------
 function findMaxCrossingProfit(prices, left, mid, right) {
   let leftSum = -Infinity, rightSum = -Infinity;
   let sum = 0, minDay = mid, maxDay = mid + 1;
@@ -35,7 +36,7 @@ function findMaxProfit(prices, left, right) {
   else return crossResult;
 }
 
-// Daily Prices
+// ---------- Daily Prices ----------
 document.getElementById("generate").addEventListener("click", () => {
   const days = parseInt(document.getElementById("days").value);
   const container = document.getElementById("price-inputs");
@@ -83,7 +84,93 @@ document.getElementById("analyze").addEventListener("click", () => {
   `;
 });
 
-// Mode switch
+// ---------- Multiple Shares ----------
+document.getElementById("generateStocks").addEventListener("click", () => {
+  const numStocks = parseInt(document.getElementById("numStocks").value);
+  const container = document.getElementById("multi-inputs");
+  container.innerHTML = "";
+
+  if (numStocks < 1) {
+    alert("Please enter at least 1 stock!");
+    return;
+  }
+
+  for (let i = 1; i <= numStocks; i++) {
+    const section = document.createElement("div");
+    section.classList.add("stock-box");
+    section.innerHTML = `
+      <h4>📈 Stock ${i}</h4>
+      <label>Enter Stock Name:</label>
+      <input type="text" id="stockName${i}" placeholder="e.g., Infosys">
+      <label>Enter Number of Days:</label>
+      <input type="number" id="days${i}" placeholder="e.g., 5" min="2">
+      <button onclick="generateStockPrices(${i})">Add Prices</button>
+      <div id="priceContainer${i}"></div>
+    `;
+    container.appendChild(section);
+  }
+
+  document.getElementById("analyzeMulti").style.display = "inline-block";
+});
+
+function generateStockPrices(i) {
+  const days = parseInt(document.getElementById(`days${i}`).value);
+  const container = document.getElementById(`priceContainer${i}`);
+  container.innerHTML = "";
+
+  if (days < 2) {
+    alert("Please enter at least 2 days!");
+    return;
+  }
+
+  for (let j = 1; j <= days; j++) {
+    const div = document.createElement("div");
+    div.innerHTML = `Day ${j} Price: ₹ <input type="number" id="stock${i}price${j}" required>`;
+    container.appendChild(div);
+  }
+}
+
+document.getElementById("analyzeMulti").addEventListener("click", () => {
+  const numStocks = parseInt(document.getElementById("numStocks").value);
+  let results = [];
+
+  for (let i = 1; i <= numStocks; i++) {
+    const stockName = document.getElementById(`stockName${i}`).value.trim();
+    const days = parseInt(document.getElementById(`days${i}`).value);
+
+    if (!stockName) return alert(`Enter name for Stock ${i}`);
+
+    let prices = [];
+    for (let j = 1; j <= days; j++) {
+      let val = parseFloat(document.getElementById(`stock${i}price${j}`).value);
+      if (isNaN(val)) return alert(`Enter valid price for day ${j} in stock ${i}`);
+      prices.push(val);
+    }
+
+    let changes = [];
+    for (let k = 1; k < prices.length; k++) {
+      changes.push(prices[k] - prices[k - 1]);
+    }
+
+    let result = findMaxProfit(changes, 0, changes.length - 1);
+    results.push({ name: stockName, profit: result.profit, hold: result.sell - result.buy + 1 });
+  }
+
+  results.sort((a, b) => b.profit - a.profit);
+  let best = results[0];
+
+  let outputHTML = `<h3>💼 Multi-Stock Analysis Results</h3>`;
+  results.forEach(r => {
+    outputHTML += `
+      <p><b>${r.name}</b> → Profit: ₹${r.profit.toFixed(2)}, Holding Period: ${r.hold} days</p>
+    `;
+  });
+
+  outputHTML += `<h4 style="color:#00e6ff;">🏆 Best Performing Stock: ${best.name} (₹${best.profit.toFixed(2)})</h4>`;
+  document.getElementById("output").innerHTML = outputHTML;
+});
+
+// ---------- Mode Switch ----------
 document.querySelectorAll("input[name='mode']").forEach(radio => {
   radio.addEventListener("change", e => {
     if (e.target.value === "daily") {
@@ -96,4 +183,3 @@ document.querySelectorAll("input[name='mode']").forEach(radio => {
     document.getElementById("output").innerHTML = "";
   });
 });
-
