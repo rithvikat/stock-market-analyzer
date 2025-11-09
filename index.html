@@ -8,42 +8,41 @@
 </head>
 <body>
   <div class="container">
-    <h1>📈 Stock Market Analyzer</h1>
-    <p class="subtitle">Analyze profits using Divide & Conquer</p>
+    <h1>📈 <span class="highlight">Stock Market Analyzer</span></h1>
+    <p class="subtitle">Analyze profits using <strong>Divide & Conquer</strong></p>
 
     <div class="mode-select">
-      <label><input type="radio" name="mode" value="daily" checked /> 📅 Daily Prices</label>
-      <label><input type="radio" name="mode" value="multiple" /> 💼 Multiple Shares</label>
+      <label><input type="radio" name="mode" value="daily" checked> 📅 Daily Prices</label>
+      <label><input type="radio" name="mode" value="multi"> 💼 Multiple Shares</label>
     </div>
 
-    <!-- Daily Price Mode -->
-    <div id="daily-mode" class="mode-section">
+    <div id="daily-section" class="mode-section">
       <h2>📅 Daily Price Analysis</h2>
-      <label for="stock">Enter Stock Name:</label>
-      <input type="text" id="stock" placeholder="e.g., Reliance Industries" />
+      <label>Enter Stock Name:</label>
+      <input type="text" id="stock" placeholder="e.g., Reliance Industries">
 
-      <label for="days">Enter Number of Days:</label>
-      <input type="number" id="days" min="2" placeholder="e.g., 6" />
+      <label>Enter Number of Days:</label>
+      <input type="number" id="days" placeholder="e.g., 6" min="2">
+
       <button id="generate">Generate Price Inputs</button>
-
       <div id="price-inputs"></div>
       <button id="analyze" class="analyze-btn" style="display:none;">Analyze</button>
     </div>
 
-    <!-- Multiple Shares Mode -->
-    <div id="multi-mode" class="mode-section" style="display:none;">
+    <div id="multi-section" class="mode-section" style="display:none;">
       <h2>💼 Multiple Shares Analysis</h2>
-      <label for="numShares">Enter Number of Shares:</label>
-      <input type="number" id="numShares" min="1" placeholder="e.g., 3" />
-      <button id="generateShares">Generate Share Inputs</button>
-      <div id="shares-container"></div>
-      <button id="analyzeShares" class="analyze-btn" style="display:none;">Analyze All</button>
+      <label>Enter Number of Stocks:</label>
+      <input type="number" id="numStocks" placeholder="e.g., 3" min="1">
+      <button id="generateStocks">Generate Stock Inputs</button>
+      <div id="multi-inputs"></div>
+      <button id="analyzeMulti" class="analyze-btn" style="display:none;">Analyze All</button>
     </div>
 
     <div id="output" class="output"></div>
   </div>
 
   <footer>© 2025 Stock Analyzer | Built with ❤️ using HTML, CSS & JS</footer>
+
   <script src="script.js"></script>
 </body>
 </html>
